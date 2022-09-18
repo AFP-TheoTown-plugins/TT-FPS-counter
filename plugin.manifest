@@ -1,0 +1,12 @@
+{
+  "id":"$fpsc",
+  "version":0,
+  "title":"FPS counter",
+  "text":"",
+  "author":"TA",
+  //"thumbnail":"Something.png",
+  "category":false,
+  //"url":"https://forum.theotown.com/",
+  "multiplayer":true,
+  "once":true
+}
