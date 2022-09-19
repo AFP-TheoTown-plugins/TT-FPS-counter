@@ -1,0 +1,1 @@
+Please be advised that usage of my plugins are 100% at your own risk and they have no code to unnecessarily cause crashes or freezes. Also, I do not endorse the use of alt accounts on theotown official discord, and you could be banned for doing so.
