@@ -1,12 +1,10 @@
 {
   "id":"$fpsc",
-  "version":0,
+  "version":12,
   "title":"FPS counter",
   "text":"",
-  "author":"TA",
-  //"thumbnail":"Something.png",
+  "author":"AFP",
   "category":false,
-  //"url":"https://forum.theotown.com/",
   "multiplayer":true,
-  "once":true
+  "url":"https://github.com/AFP-TheoTown-plugins/FPS-counter/raw/main/FPS%20counter.plugin"
 }
