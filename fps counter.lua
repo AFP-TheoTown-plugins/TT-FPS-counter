@@ -1,96 +1,121 @@
-local s=Util.optStorage(TheoTown.getStorage(),script:getDraft():getId())
-local tt,ott=Runtime.getTime()
 local p2,p3,p4,p5=0,0,0,0
-local fps=0
-if not tonumber(s.position) then s.position=0 end
-if not tonumber(s.position0) then s.position0=0 end
-if not tonumber(s.x) then s.x=0 end
-if not tonumber(s.y) then s.y=0 end
-function script:overlay() pcall(function() p2,p3,p4,p5=GUI.getRoot():getPadding() end) end
-local function openUI()
-	pcall(function() GUI.get("fpscounteroverlay"):delete() end)
-	if not s.showFPSCounter then return end
-	GUI.getRoot():addCanvas {
-		id="fpscounteroverlay",
-		onUpdate=function(self)
-			local p=self:getParent()
-			self:setPosition(-p2,-p3)
-			self:setSize(p:getWidth(),p:getHeight())
-			local c=GUI.get("roottoolbar")
-			if not c then self:setChildIndex(p:countChildren()) return end
-			if c:isVisible() then
-				c=c:getChild(1)
-				local y,h=c:getY(),c:getH()
-				self:addH(-c:getH()-c:getY())
-				self:addY(c:getH()+c:getY())
-			end
-		end,
-		onDraw=function(self,x,y,w,h)
-			ott=Runtime.getTime()
-			fps=0
-			local i=ott-tt
-			fps=math.floor(1000/i)
-			tt=Runtime.getTime()
-			local r,g,b=Drawing.getColor()
-			local a=Drawing.getAlpha()
-			local sx,sy=Drawing.getScale()
-			local s0=1
-			Drawing.setScale(sx*s0,sy*s0)
-			local sx2,sy2=Drawing.getScale()
-			local text="FPS: "..fps
-			--.." ("..(i/1000).."s)"
-			local tw,th=Drawing.getTextSize(text,Font.SMALL)
-			local x0,y0=x+p2+s.x,y+p3+s.y
-			if tonumber(s.position)==1 then x0=x+p2+((w-p2-p4)/2)-(tw/2) end
-			if tonumber(s.position)==2 then x0=x+w-tw-p4-s.x end
-			if tonumber(s.position0)==1 then y0=y+h-th-p5-s.y end
-			Drawing.setColor(0,0,0) Drawing.setAlpha(a*0.7)
-			Drawing.drawRect(x0,y0,tw,th)
-			Drawing.setColor(r,g,b) Drawing.setAlpha(a)
-			Drawing.drawText(text,x0,y0,Font.SMALL)
-			Drawing.setScale(sx,sy)
-		end
-	}:setTouchThrough(true)
+local ott=Runtime.getTime()
+local stt={}
+local saveDrawing=function()
+	local a,r,g,b=Drawing.getAlpha(),Drawing.getColor()
+	local sx,sy=Drawing.getScale()
+	return function(aa)
+		aa=tonumber(aa) or 0
+		return Drawing.setAlpha(a*aa)
+	end,
+	function(rr,gg,bb)
+		rr,gg,bb=tonumber(rr) or 255,tonumber(gg) or 255,tonumber(bb) or 255
+		return Drawing.setColor(rr*(r/255),gg*(g/255),bb*(b/255))
+	end,
+	function(x,y)
+		x,y=tonumber(x) or 0,tonumber(y) or 0
+		return Drawing.setScale(x*sx,y*sy)
+	end
 end
-function script:enterStage() openUI() end
-if GUI then openUI() end
+local ths=function(s)
+	local s3=s
+	pcall(function()
+		local s2,mn,t="","",{}
+		if tonumber(s) then
+			if tonumber(s)%1~=0 then
+				local ts=tostring
+				local s4,s5=ts(s),ts(s):reverse()
+				while not s4:endsWith(".") do s4=s4:sub(1,-2) end
+				while not s5:endsWith(".") do s5=s5:sub(1,-2) end
+				s,s2=s4:sub(1,-2),s5:sub(1,-2)
+			end
+			--s,s2=math.modf(s)
+			if (tonumber(s) or 0)<0 then mn="-" s=tostring(s):gsub(mn,"",1)end
+			if (tonumber(s2) or 0)==0 then s2="" end
+		end
+		s=tostring(s):reverse()
+		for v in string.gmatch(s,".") do table.insert(t,v)end
+		for k in pairs(t) do if k%4==0 then table.insert(t,k,",") end end
+		s3=mn..(table.concat(t):reverse()..(tostring(s2):gsub("0","",1)))
+	end)
+	return s3
+end
+function script:lateInit()
+	stt=Util.optStorage(TheoTown.getStorage(),self:getDraft():getId())
+	stt.ena=not not stt.ena
+	stt.p0=tonumber(stt.p0) or 0
+	stt.p1=tonumber(stt.p1) or 0
+end
 function script:settings()
+	local function v0(v)
+		if tonumber(v) then
+			v=tonumber(v)
+			if v%1<=0.25 then v=math.floor(v) end
+			if v%1>0.25 or v%1<=0.75 then v=math.floor(v)+0.5 end
+			if v%1>0.75 then v=math.floor(v)+1 end
+			return v
+		end
+		return v
+	end
 	local tbl={
 		{
-			name="Show FPS counter",
-			value=not not s.showFPSCounter,
-			onChange=function(v) s.showFPSCounter=v end
-		},
-		{
-			name="Position A",
-			value=({"Left","Center","Right"})[s.position+1],
-			values={"","<",({"Left","Center","Right"})[s.position+1],">"},
-			onChange=function(v)
-				s.position=tonumber(s.position) or 0
-				if v=="<" then s.position=s.position-1 end
-				if v==">" then s.position=s.position+1 end
-				if s.position>2 then s.position=0 end
-				if s.position<0 then s.position=2 end
-			end
-		},
-		{
-			name="Position B",
-			value=s.position0,
-			values={0,1},
-			valueNames={"Top","Bottom"},
-			onChange=function(v)
-				s.position0=v
-				if s.position0>1 then s.position0=0 end
-				if s.position0<0 then s.position0=1 end
-			end
+			name="Enabled",
+			value=stt.ena,
+			onChange=function(v) stt.ena=v end
 		}
 	}
-	for _,k in pairs{"x","y"} do tbl[#tbl+1]={
-		name="Offset "..k:upper(),
-		value=s[k],
-		desc="Set value for offset "..k..":",
-		--values={"<<<","<<","<",s[k],">",">>",">>>"},
-		onChange=function(v) s[k]=tonumber(v) or 0 end
-	} end
+	if stt.ena then
+		table.insert(tbl,{
+			name="Position A",
+			value=1,
+			values={0,1,2},
+			valueNames={"<",({"L","C","R"})[1+math.floor(stt.p0*2)],">"},
+			onChange=function(v)
+				if v==2 then stt.p0=stt.p0+0.5 end
+				if v==0 then stt.p0=stt.p0-0.5 end
+				while stt.p0>1 do stt.p0=stt.p0-1.5 end
+				while stt.p0<0 do stt.p0=stt.p0+1.5 end
+			end
+		})
+		table.insert(tbl,{
+			name="Position B",
+			value=1,
+			values={0,1,2},
+			valueNames={"/\\",({"T","C","B"})[1+math.floor(stt.p1*2)],"V"},
+			onChange=function(v)
+				if v==2 then stt.p1=stt.p1+0.5 end
+				if v==0 then stt.p1=stt.p1-0.5 end
+				while stt.p1>1 do stt.p1=stt.p1-1.5 end
+				while stt.p1<0 do stt.p1=stt.p1+1.5 end
+			end
+		})
+	end
 	return tbl
+end
+local ww=0
+function script:overlay()
+	pcall(function() p2,p3,p4,p5=GUI.getRoot():getPadding() end)
+	if not stt.ena then return end
+	--local rt=GUI.getRoot()
+	--local x,y,w,h=0,0,rt:getWidth(),rt:getHeight()
+	local x,y,w,h=p2,p3,Drawing.getSize()
+	w,h=w-p2-p4,h-p3-p5
+	local setAlpha,setColor=saveDrawing()
+	local text,ii=text,ii
+	do
+		local tt=Runtime.getTime()
+		local i=tt-ott
+		ott=Runtime.getTime()
+		ii=math.floor(1000/i)
+		text="FPS: "..ths(ii).." ("..i.."ms)",ii
+	end
+	local tw,th=Drawing.getTextSize(text,Font.SMALL)
+	ww=tw+((ww-tw)*0.5) tw=ww
+	setAlpha(0.6) setColor(255*(1-math.min(1,ii/10)),0,0)
+	x,y=x+((w-tw)*stt.p0),y+((h-th)*stt.p1)
+	Drawing.drawRect(x,y,tw,th)
+	Drawing.setClipping(x+0.5,y+0.25,tw+0.5,th+0.5)
+	setAlpha(1) setColor(255,255,255)
+	Drawing.drawText(text,x,y,Font.SMALL)
+	Drawing.resetClipping()
 end
