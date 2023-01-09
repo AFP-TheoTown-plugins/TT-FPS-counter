@@ -1,5 +1,5 @@
 [{
 	"id":"$fpsc01",
-	"type":"data",
+	"type":"script",
 	"script":"fps counter.lua"
 }]
